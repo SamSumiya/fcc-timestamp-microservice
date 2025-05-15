@@ -47,7 +47,21 @@ const ValidateUnix = (rawMS) => {
   return true 
 }
 
+const validateUserInput = (userInput) => {
+  let parsed; 
+
+  if (ValidateUnix(userInput)) {
+    const numberedInput = Number(userInput)
+    parsed =  new Date(numberedInput)
+  } else {
+    parsed = new Date(userInput)
+  }
+  return parsed 
+}
+
 app.get('/api/:date?', function(req, res) {
+
+
 
   let dateOfToday; 
 
@@ -58,8 +72,8 @@ app.get('/api/:date?', function(req, res) {
   dateOfToday=`${year}-${month}-${day}`
 
   try {
-    const dateParam = req.params.date ? req.params.date : dateOfToday
-
+    const dateParam = req.params.date ? validateUserInput(req.params.date) : dateOfToday
+    console.log(dateParam)
     const isValidDate = validateDate(dateParam)
 
     if (isValidDate) {
@@ -86,10 +100,6 @@ app.get('/api/:date?', function(req, res) {
     console.error("error : Invalid Date")
   }
 })
-
-// 🐔 Step 2
-// 4. A request to /api/1451001600000 should 
-// return { unix: 1451001600000, utc: "Fri, 25 Dec 2015 00:00:00 GMT" }
 
 
 
