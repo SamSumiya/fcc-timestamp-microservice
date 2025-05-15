@@ -60,20 +60,8 @@ const validateUserInput = (userInput) => {
 }
 
 app.get('/api/:date?', function(req, res) {
-
-
-
-  let dateOfToday; 
-
-  const year = new Date().getUTCFullYear()
-  const month = new Date().getUTCMonth() + 1
-  const day = new Date().getUTCDate();
-
-  dateOfToday=`${year}-${month}-${day}`
-
   try {
-    const dateParam = req.params.date ? validateUserInput(req.params.date) : dateOfToday
-    console.log(dateParam)
+    const dateParam = req.params.date ? validateUserInput(req.params.date) : new Date()
     const isValidDate = validateDate(dateParam)
 
     if (isValidDate) {
