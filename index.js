@@ -21,7 +21,7 @@ app.get("/", function (req, res) {
 // unix key that is a Unix timestamp of the input date in milliseconds (as type Number)
   // 01, 23 , 31
 const validateDate = (rawDate) => {     
-  const regex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+  const regex = /^\d{4}-(0?[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
   const isValid = regex.test(rawDate)
   
   if (!isValid) return false
@@ -39,16 +39,25 @@ const validateDate = (rawDate) => {
 
 
 
-app.get('/api/:date', function(req, res) {
+app.get('/api/:date?', function(req, res) {
+  let dateOfToday; 
+
+  const year = new Date().getUTCFullYear()
+  const month = new Date().getUTCMonth() + 1
+  const day = new Date().getUTCDate();
+
+  dateOfToday=`${year}-${month}-${day}`
+
   try {
-    const dateParam = req.params.date ? req.params.date : new Date()
+    const dateParam = req.params.date ? req.params.date : dateOfToday
+
     const isValidDate = validateDate(dateParam)
     if (isValidDate) {
       const formattedDate = new Date(dateParam)
       const unixTimestamp = formattedDate.getTime();
       res.json({
         unix: unixTimestamp, 
-        utc: new Date().toUTCString()
+        utc: formattedDate.toUTCString()
       })
     } else {
       console.log(`Input date ${dateParam} format is invalid`)
