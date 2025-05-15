@@ -18,74 +18,55 @@ app.get("/", function (req, res) {
   res.sendFile(__dirname + '/views/index.html');
 });
 
-// 🐶 Step 1 
-// A request to /api/:date? with a valid date should return a JSON object with a
-// unix key that is a Unix timestamp of the input date in milliseconds (as type Number)
-const validateDate = (rawDate) => {     
-  const regex = /^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/;
-  const isValid = regex.test(rawDate)
-  
-  if (!isValid) return false
-  
-  const [ year, month, day ] = rawDate.split('-').map(Number); 
-  const date = new Date(rawDate)
+/**
+ * 
+ * Validates an array of 4 time-related values to ensure each can be successfully parsed by JavaScript's Date constructor.
+ * FCC-style requirement: any input that can be passed to `new Date(value)` and not return "Invalid Date" is considered valid.
+ * 
+ * Acceptable input formats include:
+ * - ISO 8601 date strings (e.g., "2011-01-01", "2025-12-25T14:30:00")
+ * - Unix timestamps (as strings or numbers, e.g., "1451001600000")
+ * - RFC 2822 date strings (e.g., "Mon, 25 Dec 1995 13:30:00 GMT")
+ * 
+ */
 
-  return (
-    date.getUTCFullYear() === year && 
-    date.getUTCMonth() + 1 === month && 
-    date.getUTCDate() === day
-  ); 
+// Validate Unix timestamps 
+const isValidUnixTimeStamp = ( dateString ) =>{ 
+  return typeof dateString === 'string' && /^\d+$/.test(String(dateString)) 
 }
 
-const ValidateUnix = (rawMS) => {
-  const ms = Number(rawMS)
-  if (isNaN( ms )) {
-    return false  
-  }
- 
-  if (!/^\d+$/.test(ms)) return false; // not all digits
-  return true 
-}
-
-const validateUserInput = (userInput) => {
-  let parsed; 
-
-  if (ValidateUnix(userInput)) {
-    const numberedInput = Number(userInput)
-    parsed =  new Date(numberedInput)
+// converting user input date to UTC and UNIX 
+const parseDateInput = ( dateString ) => {
+  if ( isValidUnixTimeStamp(dateString)) {
+    const ms = Number(dateString)
+    return new Date(ms)
   } else {
-    parsed = new Date(userInput)
+    return new Date(dateString)
   }
-  return parsed 
+}
+
+const buildDateResponse = (date) => {
+  if (date.toString() === 'Invalid Date') {
+    return { error: 'Invalid Date' };
+  } else {
+    return {
+      unix: date.getTime(), 
+      utc: date.toUTCString()
+    }
+  }
 }
 
 app.get('/api/:date?', function(req, res) {
   try {
-    const dateParam = req.params.date ? validateUserInput(req.params.date) : new Date()
-    const isValidDate = validateDate(dateParam)
+    const userInput = req.params.date ? req.params.date : new Date()
 
-    if (isValidDate) {
-      console.log('✅ input is valid date', dateParam)
-      const formattedDate = new Date(dateParam)
-      const unixTimestamp = formattedDate.getTime();
-      res.json({
-        unix: unixTimestamp, 
-        utc: formattedDate.toUTCString()
-      })
-    } else if (ValidateUnix(dateParam)) {
-      const unixTimestamp = Number(dateParam)
-      const utcDate = new Date(unixTimestamp) 
-      res.json({
-        unix: unixTimestamp, 
-        utc: utcDate.toUTCString() 
-      })
-    } else {
-       res.json({
-        "error" : "Invalid Date" 
-      })
-    }
-  } catch(err) {
-    console.error("error : Invalid Date")
+    const parsedDate = parseDateInput (userInput)
+
+    const response = buildDateResponse(parsedDate)
+    res.json(response)
+  } catch ( err ) {
+    console.log("Error message: ", err)
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 })
 
