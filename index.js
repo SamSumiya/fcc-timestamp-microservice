@@ -17,7 +17,46 @@ app.use(express.static('public'));
 app.get("/", function (req, res) {
   res.sendFile(__dirname + '/views/index.html');
 });
+// A request to /api/:date? with a valid date should return a JSON object with a
+// unix key that is a Unix timestamp of the input date in milliseconds (as type Number)
+  // 01, 23 , 31
+const validateDate = (rawDate) => {     
+  const regex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+  const isValid = regex.test(rawDate)
+  
+  if (!isValid) return false
+  
+  const [ year, month, day ] = rawDate.split('-').map(Number); 
+  const date = new Date(rawDate)
 
+  return (
+    date.getUTCFullYear() === year && 
+    date.getUTCMonth() + 1 === month && 
+    date.getUTCDate() === day
+  ); 
+}
+
+
+
+
+app.get('/api/:date', function(req, res) {
+  try {
+    const dateParam = req.params.date ? req.params.date : new Date()
+    const isValidDate = validateDate(dateParam)
+    if (isValidDate) {
+      const formattedDate = new Date(dateParam)
+      const unixTimestamp = formattedDate.getTime();
+      res.json({
+        unix: unixTimestamp, 
+        utc: new Date().toUTCString()
+      })
+    } else {
+      console.log(`Input date ${dateParam} format is invalid`)
+    }
+  } catch(err) {
+    console.error(`error : "Invalid Date"`)
+  }
+})
 
 // your first API endpoint... 
 app.get("/api/hello", function (req, res) {
