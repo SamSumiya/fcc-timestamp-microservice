@@ -17,11 +17,12 @@ app.use(express.static('public'));
 app.get("/", function (req, res) {
   res.sendFile(__dirname + '/views/index.html');
 });
+
+// 🐶 Step 1 
 // A request to /api/:date? with a valid date should return a JSON object with a
 // unix key that is a Unix timestamp of the input date in milliseconds (as type Number)
-  // 01, 23 , 31
 const validateDate = (rawDate) => {     
-  const regex = /^\d{4}-(0?[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+  const regex = /^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/;
   const isValid = regex.test(rawDate)
   
   if (!isValid) return false
@@ -36,10 +37,18 @@ const validateDate = (rawDate) => {
   ); 
 }
 
-
-
+const ValidateUnix = (rawMS) => {
+  const ms = Number(rawMS)
+  if (isNaN( ms )) {
+    return false  
+  }
+ 
+  if (!/^\d+$/.test(ms)) return false; // not all digits
+  return true 
+}
 
 app.get('/api/:date?', function(req, res) {
+
   let dateOfToday; 
 
   const year = new Date().getUTCFullYear()
@@ -52,20 +61,33 @@ app.get('/api/:date?', function(req, res) {
     const dateParam = req.params.date ? req.params.date : dateOfToday
 
     const isValidDate = validateDate(dateParam)
+
     if (isValidDate) {
+      console.log('✅ input is valid date', dateParam)
       const formattedDate = new Date(dateParam)
       const unixTimestamp = formattedDate.getTime();
       res.json({
         unix: unixTimestamp, 
         utc: formattedDate.toUTCString()
       })
-    } else {
-      console.log(`Input date ${dateParam} format is invalid`)
+    } else if (ValidateUnix(dateParam)) {
+      const unixTimestamp = Number(dateParam)
+      const utcDate = new Date(unixTimestamp) 
+      res.json({
+        unix: unixTimestamp, 
+        utc: utcDate
+      })
     }
   } catch(err) {
-    console.error(`error : "Invalid Date"`)
+    console.error("error : Invalid Date")
   }
 })
+
+// 🐔 Step 2
+// 4. A request to /api/1451001600000 should 
+// return { unix: 1451001600000, utc: "Fri, 25 Dec 2015 00:00:00 GMT" }
+
+
 
 // your first API endpoint... 
 app.get("/api/hello", function (req, res) {
